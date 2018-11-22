@@ -1,0 +1,3 @@
+include 'bank-cordapp'
+include 'loannetwork-cordapp-states'
+include 'clients'
