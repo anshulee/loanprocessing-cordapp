@@ -10,7 +10,7 @@ import javax.persistence.Table
 
 object LoanStateSchema
 
-object LoanStateSchemaV1: MappedSchema(LoanStateSchema.javaClass,1, listOf(LoanState::class.java)) {
+object LoanStateSchemaV1: MappedSchema(LoanStateSchema.javaClass,1, listOf(PersistentLoanState::class.java)) {
 @Entity
 @Table(name="loan_states")
 class PersistentLoanState
