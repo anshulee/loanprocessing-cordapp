@@ -11,6 +11,7 @@ import net.corda.core.contracts.Command
 import net.corda.core.contracts.StateAndContract
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
+import net.corda.core.serialization.SerializationWhitelist
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 import java.time.Instant
@@ -69,6 +70,13 @@ class RecieveApplication(val loanApp: LoanStateModel) : FlowLogic<Unit>() {
         subFlow(FinalityFlow(signedTx))
     }
 }
+class SerializationWhiteList : SerializationWhitelist {
+
+    override val whitelist: List<Class<*>> = listOf(java.sql.Date::class.java, java.util.Date::class.java,
+            Instant::class.java)
+
+}
+
 
 @InitiatedBy(RecieveApplication::class)
 class Responder(val counterpartySession: FlowSession) : FlowLogic<Unit>() {
