@@ -3,13 +3,18 @@ package com.template.webserver
 import com.loannetwork.bank.RecieveApplication
 import com.loannetwork.base.model.LoanStateModel
 import com.loannetwork.base.state.LoanState
+import com.loannetwork.base.state.LoanStateSchemaV1
+import com.template.webserver.Models.LoanRecordResults
 import net.corda.core.contracts.StateAndRef
 import net.corda.core.internal.randomOrNull
 import net.corda.core.messaging.startFlow
 import net.corda.core.messaging.vaultQueryBy
 import net.corda.core.node.services.Vault
+import net.corda.core.node.services.vault.Builder.equal
+import net.corda.core.node.services.vault.PageSpecification
 import net.corda.core.node.services.vault.QueryCriteria
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -51,7 +56,7 @@ class Controller(rpc: NodeRPCConnection) {
        return ResponseEntity.ok("Generation Complete")
     }
 
-    @GetMapping(value="/gethistory/{id}", produces= arrayOf("application/json"))
+    @GetMapping(value="/gethistorys/{id}", produces= arrayOf("application/json"))
     private fun getApplicationData(@PathVariable("id") id:String ): ResponseEntity<List<StateAndRef<LoanState>>>
     {
         //External ID can be used to identify a record. Ideally have unique external IDs for your records
@@ -65,5 +70,17 @@ class Controller(rpc: NodeRPCConnection) {
         return ResponseEntity.ok(statesInVault)
     }
 
+    @GetMapping(value="/getApplications/{status}/{page}", produces= arrayOf("application/json"))
+    fun getStatusBasedApplications(@PathVariable("status")status:String,@PathVariable("page")page:Int):ResponseEntity<LoanRecordResults>
+    {
+        var recordsByStatus = LoanStateSchemaV1.PersistentLoanState::status.equal(status)
+        val customCriteria = QueryCriteria.VaultCustomQueryCriteria(recordsByStatus, status = Vault.StateStatus.UNCONSUMED)
+        val pageSpec= PageSpecification(page)
+        val result = proxy.vaultQueryBy<LoanState>(customCriteria,pageSpec)
+        var recordsInMyVault = result.states
+        val totalRecords= result.totalStatesAvailable
+        val consolidatedResponse= LoanRecordResults(totalRecords , recordsInMyVault)
+        return ResponseEntity(consolidatedResponse, HttpStatus.OK)
+    }
 
 }
