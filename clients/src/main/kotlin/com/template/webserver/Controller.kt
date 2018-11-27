@@ -1,5 +1,6 @@
 package com.template.webserver
 
+import com.loannetwork.bank.PendingApplicationCount
 import com.loannetwork.bank.RecieveApplication
 import com.loannetwork.base.model.LoanStateModel
 import com.loannetwork.base.state.LoanState
@@ -91,4 +92,23 @@ class Controller(rpc: NodeRPCConnection) {
         return ResponseEntity(consolidatedResponse, HttpStatus.OK)
     }
 
+    @GetMapping("/getApplications/{applicantName}", produces=arrayOf("application/json"))
+    fun getApplicationsBasedOnApplicant(@PathVariable("applicantName")applicantName:String):ResponseEntity<LoanRecordResults>
+    {
+        var recordsByName = LoanStateSchemaV1.PersistentLoanState::applicant.equal(applicantName)
+        val customCriteria = QueryCriteria.VaultCustomQueryCriteria(recordsByName, status = Vault.StateStatus.UNCONSUMED)
+
+        val result = proxy.vaultQueryBy<LoanState>(customCriteria)
+        var recordsInMyVault = result.states
+        val totalRecords= result.totalStatesAvailable
+        val consolidatedResponse= LoanRecordResults(totalRecords , recordsInMyVault)
+        return ResponseEntity(consolidatedResponse, HttpStatus.OK)
+    }
+
+    @GetMapping ("getPendingApplicationCount", produces=arrayOf("text/plain"))
+    fun getPendingApplicationCount(): String? {
+        val countFlow= proxy.startFlow( ::PendingApplicationCount)
+        return countFlow.returnValue.get()?.toString()
+
+    }
 }

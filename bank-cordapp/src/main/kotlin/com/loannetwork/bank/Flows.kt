@@ -7,10 +7,17 @@ import com.loannetwork.base.NodeIdentity
 import com.loannetwork.base.model.LoanStateModel
 import com.loannetwork.base.model.LoanStatus
 import com.loannetwork.base.state.LoanState
+import com.loannetwork.base.state.LoanStateSchemaV1
 import net.corda.core.contracts.Command
 import net.corda.core.contracts.StateAndContract
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
+import net.corda.core.messaging.vaultQueryBy
+import net.corda.core.node.services.Vault
+import net.corda.core.node.services.queryBy
+import net.corda.core.node.services.vault.Builder.equal
+import net.corda.core.node.services.vault.PageSpecification
+import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.serialization.SerializationWhitelist
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
@@ -46,6 +53,7 @@ class RecieveApplication(val loanApp: LoanStateModel) : FlowLogic<Unit>() {
     }
     override val progressTracker = tracker()
 
+
     @Suspendable
     override fun call() {
         val notary = NodeIdentity.getNotary(serviceHub)
@@ -70,6 +78,22 @@ class RecieveApplication(val loanApp: LoanStateModel) : FlowLogic<Unit>() {
         subFlow(FinalityFlow(signedTx))
     }
 }
+
+@StartableByRPC
+class PendingApplicationCount() : FlowLogic<Long>() {
+    override fun call(): Long
+    {
+        var recordsByStatus = LoanStateSchemaV1.PersistentLoanState::status.equal("RECIEVED")
+        val customCriteria = QueryCriteria.VaultCustomQueryCriteria(recordsByStatus, status = Vault.StateStatus.UNCONSUMED)
+        val pageSpec= PageSpecification(1)
+        val result = serviceHub.vaultService.queryBy<LoanState>(customCriteria,pageSpec)
+        var recordsInMyVault = result.states
+        val totalRecords= result.totalStatesAvailable
+        return totalRecords
+    }
+
+}
+
 class SerializationWhiteList : SerializationWhitelist {
 
     override val whitelist: List<Class<*>> = listOf(java.sql.Date::class.java, java.util.Date::class.java,
