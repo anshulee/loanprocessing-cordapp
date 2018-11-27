@@ -15,6 +15,8 @@ object LoanStateSchemaV1: MappedSchema(LoanStateSchema.javaClass,1, listOf(Persi
 @Table(name="loan_states")
 class PersistentLoanState
 (
+        @Column (name="applicationNumber")
+        var applicationNumber:Int=1,
         @Column(name="status")
         var status:String="",
         @Column(name="applicant")
@@ -37,7 +39,7 @@ class PersistentLoanState
         var linearId: UUID
 ): PersistentState()
 {
-    constructor():this("","","","","",0F,Date.from(Instant.now()),Date.from(Instant.now()),null, UUID.randomUUID())
+    constructor():this(1,"","","","","",0F,Date.from(Instant.now()),Date.from(Instant.now()),null, UUID.randomUUID())
 }
 
 

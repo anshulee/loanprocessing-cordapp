@@ -12,14 +12,14 @@ import java.time.Instant
 import java.util.*
 
 @CordaSerializable
-data class LoanState (val status: String, val parties:List<Party>, val applicant:String, val builderName:String, val propertyName:String, val address:String, val loanAmount:Float, override val linearId: UniqueIdentifier, val appliedDate: Date, val updatedDate: Date = Date.from(Instant.now()), val isAuthRequired:Boolean?=null) : LinearState, QueryableState {
+data class LoanState (val applicationNumber:Int, val status: String, val parties:List<Party>, val applicant:String, val builderName:String, val propertyName:String, val address:String, val loanAmount:Float, override val linearId: UniqueIdentifier, val appliedDate: Date, val updatedDate: Date = Date.from(Instant.now()), val isAuthRequired:Boolean?=null) : LinearState, QueryableState {
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(LoanStateSchemaV1)
 
     override fun generateMappedObject(schema: MappedSchema): PersistentState {
 
         return when (schema) {
             is LoanStateSchemaV1 -> LoanStateSchemaV1.PersistentLoanState(
-                    this.status, this.applicant, this.builderName, this.propertyName, this.address, this.loanAmount, this.appliedDate, this.updatedDate, this.isAuthRequired, this.linearId.id)
+                    this.applicationNumber,this.status, this.applicant, this.builderName, this.propertyName, this.address, this.loanAmount, this.appliedDate, this.updatedDate, this.isAuthRequired, this.linearId.id)
 
             else -> throw IllegalArgumentException("Unrecognised schema $schema")
         }

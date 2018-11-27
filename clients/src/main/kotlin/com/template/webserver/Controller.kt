@@ -36,12 +36,20 @@ class Controller(rpc: NodeRPCConnection) {
 
     private val proxy = rpc.proxy
 
+    private fun getApplicationCountForPayer():Int{
+        val generalCriteria = QueryCriteria.VaultQueryCriteria(Vault.StateStatus.ALL)
+        val pageSpec= PageSpecification(1, 1)
+        val results= proxy.vaultQueryBy<LoanState>(criteria = generalCriteria,paging=pageSpec).totalStatesAvailable
+
+        return results.toInt()
+    }
     private fun generateData()
     {
-        var recordCount=0
-        while(recordCount<100) {
+        var tokenCount=getApplicationCountForPayer()
+        var recordCount=tokenCount
+        while(recordCount<tokenCount+100) {
             recordCount= recordCount+1
-            val record = LoanStateModel("RECIEVED", applicant = recordCount.toString(), builderName = "BB", propertyName = "CC", address = "DD", loanAmount = 8000F, appliedDate = null, updatedDate = null)
+            val record = LoanStateModel(recordCount,"RECIEVED", applicant = recordCount.toString(), builderName = "BB", propertyName = "CC", address = "DD", loanAmount = 8000F, appliedDate = null, updatedDate = null)
             loanApplicationsList.add(record)
         }
     }
@@ -56,12 +64,12 @@ class Controller(rpc: NodeRPCConnection) {
        return ResponseEntity.ok("Generation Complete")
     }
 
-    @GetMapping(value="/gethistorys/{id}", produces= arrayOf("application/json"))
+    @GetMapping(value="/gethistory/{id}", produces= arrayOf("application/json"))
     private fun getApplicationData(@PathVariable("id") id:String ): ResponseEntity<List<StateAndRef<LoanState>>>
     {
         //External ID can be used to identify a record. Ideally have unique external IDs for your records
         // By default Linear State query will give only unconsumed state. Since we want the entire history set ALL
-        val stateQuery: QueryCriteria.LinearStateQueryCriteria= QueryCriteria.LinearStateQueryCriteria(externalId = listOf(id),status = Vault.StateStatus.ALL)
+        val stateQuery: QueryCriteria.LinearStateQueryCriteria= QueryCriteria.LinearStateQueryCriteria( externalId = listOf(id),status = Vault.StateStatus.ALL)
 
         //If paging parameter is not passed it throws an exception if total records returned is more than the
         //default page size . Default page size=200.

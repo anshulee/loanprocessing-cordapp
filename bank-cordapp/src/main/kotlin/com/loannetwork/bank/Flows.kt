@@ -51,9 +51,9 @@ class RecieveApplication(val loanApp: LoanStateModel) : FlowLogic<Unit>() {
         val notary = NodeIdentity.getNotary(serviceHub)
         val txBuilder = TransactionBuilder(notary = notary)
         progressTracker.currentStep = GENERATING_TRANSACTION
-        val uniqueIdentifier= UniqueIdentifier(loanApp.applicant)
+        val uniqueIdentifier= UniqueIdentifier(loanApp.applicationNumber.toString())
 
-        val outputState = LoanState(LoanStatus.RECIEVED.toString(), listOf(ourIdentity),loanApp.applicant, loanApp.builderName, loanApp.propertyName, loanApp.address, loanApp.loanAmount, uniqueIdentifier, loanApp.appliedDate?: Date.from(Instant.now()),loanApp.updatedDate?: Date.from(Instant.now())  )
+        val outputState = LoanState(loanApp.applicationNumber,LoanStatus.RECIEVED.toString(), listOf(ourIdentity),loanApp.applicant, loanApp.builderName, loanApp.propertyName, loanApp.address, loanApp.loanAmount, uniqueIdentifier, loanApp.appliedDate?: Date.from(Instant.now()),loanApp.updatedDate?: Date.from(Instant.now())  )
         val outputContractAndState = StateAndContract(outputState, LoanStateContractID)
         val cmd = Command(LoanStateContract.RecieveApplication(), listOf(ourIdentity.owningKey))
 
